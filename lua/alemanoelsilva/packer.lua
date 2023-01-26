@@ -1,34 +1,4 @@
--- auto install packer if not installed
-local ensure_packer = function()
-	local fn = vim.fn
-	local install_path = fn.stdpath("data") .. "/site/pack/packer/start/packer.nvim"
-	if fn.empty(fn.glob(install_path)) > 0 then
-		fn.system({ "git", "clone", "--depth", "1", "https://github.com/wbthomason/packer.nvim", install_path })
-		vim.cmd([[packadd packer.nvim]])
-		return true
-	end
-	return false
-end
-local packer_bootstrap = ensure_packer() -- true if packer was just installed
-
--- autocommand that reloads neovim and installs/updates/removes plugins
--- when file is saved
-vim.cmd([[ 
-  augroup packer_user_config
-    autocmd!
-    autocmd BufWritePost plugins-setup.lua source <afile> | PackerSync
-  augroup end
-]])
-
--- import packer safely
-local status, packer = pcall(require, "packer")
-if not status then
-	return
-end
-
--- add list of plugins to install
-return packer.startup(function(use)
-	-- packer can manage itself
+return require("packer").startup(function(use)
 	use("wbthomason/packer.nvim")
 
 	use("nvim-lua/plenary.nvim") -- lua functions that many plugins use
@@ -61,11 +31,19 @@ return packer.startup(function(use)
 	-- commenting with gc
 	use("numToStr/Comment.nvim")
 
+	use({
+		"nvim-tree/nvim-tree.lua",
+		requires = {
+			"nvim-tree/nvim-web-devicons", -- optional, for file icons
+		},
+		tag = "nightly", -- optional, updated every week. (see issue #1193)
+	})
+
 	-- file explorer
-	use("nvim-tree/nvim-tree.lua")
+	-- use("nvim-tree/nvim-tree.lua")
 
 	-- vs-code like icons
-	use("nvim-tree/nvim-web-devicons")
+	-- use("nvim-tree/nvim-web-devicons")
 
 	-- code tabs
 	use("fgheng/winbar.nvim")
@@ -124,13 +102,13 @@ return packer.startup(function(use)
 			ts_update()
 		end,
 	})
-  use('nvim-treesitter/playground')
+	use("nvim-treesitter/playground")
 
 	-- harpoon configuration
-	use('theprimeagen/harpoon')
+	use("theprimeagen/harpoon")
 
 	-- undo tree closing
-	use('mbbill/undotree')
+	use("mbbill/undotree")
 
 	-- auto closing
 	use("windwp/nvim-autopairs") -- autoclose parens, brackets, quotes, etc...
@@ -139,7 +117,19 @@ return packer.startup(function(use)
 	-- git integration
 	use("lewis6991/gitsigns.nvim") -- show line modifications on left hand side
 
-	if packer_bootstrap then
-		require("packer").sync()
-	end
+	-- terminal
+	use({
+		"akinsho/toggleterm.nvim",
+		tag = "*",
+		config = function()
+			require("toggleterm").setup({
+				size = 20,
+				direction = "vertical",
+				auto_scroll = true,
+			})
+		end,
+	})
+
+	local term_opts = { buffer = 0 }
+	vim.keymap.set("t", "<esc>", [[<C-\><C-n>]], term_opts)
 end)
